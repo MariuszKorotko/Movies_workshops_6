@@ -35,9 +35,7 @@ class MovieView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     def put(self, request, id, format=None):
-        movie = self.get_object(id)
-        serializer = MovieSerializer(movie, context={"request": request},
-                                     data=request.data)
+        serializer = MovieSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -80,9 +78,7 @@ class PersonView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     def put(self, request, id, format=None):
-        person = self.get_object(id)
-        serializer = PersonSerializer(person, context={"request": request},
-                                      data=request.data)
+        serializer = PersonSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
