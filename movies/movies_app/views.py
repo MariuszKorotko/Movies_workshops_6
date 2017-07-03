@@ -3,8 +3,6 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from django.http import Http404
-from django.views import View
-from django.shortcuts import render
 
 
 class MoviesView(APIView):
@@ -28,7 +26,7 @@ class MovieView(APIView):
 
     def get(self, request, id, format=None):
         movie = self.get_object(id)
-        serializer = Movie.serializer(movie, context={"request": request})
+        serializer = MovieSerializer(movie, context={"request": request})
         return Response(serializer.data)
 
     def delete(self, request, id, format=None):
@@ -38,24 +36,61 @@ class MovieView(APIView):
 
     def put(self, request, id, format=None):
         movie = self.get_object(id)
-        serializer = Movie.serializer(movie, context={"request": request})
+        serializer = MovieSerializer(movie, context={"request": request},
+                                     data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
-    def post(self, request, format=None):
-        serializer = Movie.serializer(data=request.data)
+    def post(self, request, id, format=None):
+        serializer = MovieSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class PersonsView(View):
+class PersonsView(APIView):
 
-    def get(self, request):
+    def get(self, request, format=None):
         persons = Person.objects.order_by("name")
-        context = {
-            "persons": persons
-        }
-        return render(request, "persons.html", context)
+        serializer = PersonSerializer(persons, many=True, context={"request":
+                                                                     request})
+        return Response(serializer.data)
+
+class PersonView(APIView):
+
+    def get_object(self, pk):
+        """ Get person by primary key
+            Return person if exist, else raise Http404 page not found
+        """
+        try:
+            return Person.objects.get(pk=pk)
+        except Person.DoesNotExist:
+            raise Http404
+
+    def get(self, request, id, format=None):
+        person = self.get_object(id)
+        serializer = PersonSerializer(person, context={"request": request})
+        return Response(serializer.data)
+
+    def delete(self, request, id, format=None):
+        person = self.get_object(id)
+        person.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    def put(self, request, id, format=None):
+        person = self.get_object(id)
+        serializer = PersonSerializer(person, context={"request": request},
+                                      data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+
+    def post(self, request, id, format=None):
+        serializer = PersonSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
